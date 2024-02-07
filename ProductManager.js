@@ -2,22 +2,29 @@
 
 import fs from 'fs/promises';
 
-
-// Se crea clase "ProductManager" que permite trabajar con múltiples productos. Cuenta con una variable "this.path" inicializada desde el constructor.  
-
 class ProductManager {
     constructor(filePath) {
         this.path = filePath;
         this.nextId = 1;
     }
 
-
-// El método "addProduct" recibe un objeto, asigna un id autoincrementable y lo guarda en el arreglo.
-
     async addProduct(product) {
         try {
             const products = await this.getProducts();
+            
+            // Encontrar el último ID utilizado
+            const lastId = products.length > 0 ? Math.max(...products.map(p => p.id)) : 0;
+            this.nextId = lastId + 1;
+
+            // Verificar si ya existe un producto con el mismo código
+            const existingProduct = products.find(p => p.code === product.code);
+            if (existingProduct) {
+                throw new Error('Ya existe un producto con el mismo código.');
+            }
+
+            // Asignar el siguiente ID disponible
             product.id = this.nextId++;
+
             products.push(product);
             await this.writeToFile(products);
             return product;
@@ -25,8 +32,6 @@ class ProductManager {
             throw error;
         }
     }
-
-//  El método getProducts lee el archivo de productos y devuelve todos los productos en formato de arreglo.
 
     async getProducts() {
         try {
@@ -41,9 +46,6 @@ class ProductManager {
         }
     }
 
-
-//  El método "getProductById" recibe un id, lee el archivo y devuelve el producto con el id especificado en formato objeto. En caso de no encontrarlo, devuelve null.
-
     async getProductById(id) {
         try {
             const products = await this.getProducts();
@@ -53,8 +55,6 @@ class ProductManager {
             throw error;
         }
     }
-
-// El método "updateProduct" recibe el id del producto a actualizar y el campo a actualizar, y actualiza el producto que tiene ese id en el archivo. No borra el id del producto.
 
     async updateProduct(id, updatedFields) {
         try {
@@ -71,8 +71,6 @@ class ProductManager {
             throw error;
         }
     }
-
-// El método deleteProduct recibe un id y elimina el producto que tiene ese id en el archivo.
 
     async deleteProduct(id) {
         try {
@@ -132,11 +130,3 @@ const productManager = new ProductManager('productos.json');
         console.error('Error:', error.message);
     }
 })();
-
-
-
-
-
-
-
-
